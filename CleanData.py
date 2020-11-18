@@ -1,3 +1,4 @@
 import pandas as pd
 
-#df = 
+df = pd.read_csv("diabetes.csv")
+print(df)

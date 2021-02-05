@@ -12,6 +12,7 @@ from sklearn.ensemble import VotingClassifier
 from sklearn.svm import SVC
 from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.model_selection import GridSearchCV
 
 def showConfusionMatrix(y_test,y_pred, modelName):
     confusionMatrix = metrics.confusion_matrix(y_test, y_pred)
@@ -23,24 +24,6 @@ def showConfusionMatrix(y_test,y_pred, modelName):
     plt.xlabel('Predicted label')
     plt.show()
 
-
-def showRFFeatImoprtances(RFclassifier):
-    importances = RFClassifier.feature_importances_
-    print(importances)
-    std = np.std([tree.feature_importances_ for tree in RFClassifier.estimators_],
-             axis=0)
-    indices = np.argsort(importances)[::-1]
-    features_names = df.columns
-    feature_names = [features_names[i] for i in indices]
-    plt.figure()
-    plt.title("Feature importances")
-    plt.bar(range(x_train.shape[1]), importances[indices],
-        color="b", align="center")
-    plt.xticks(range(x_train.shape[1]), feature_names)
-
-    plt.xlabel("Feature", size = '10')
-    plt.ylabel("Importance", size = '10')
-    plt.show()
 
 df = pd.read_csv("STCompletionCheck.csv")
 
@@ -55,26 +38,36 @@ print(y_test.value_counts())
 print(y_train.value_counts(normalize=True))
 print(y_test.value_counts(normalize = True))
 
-#One model confustion matrix (For example)
-logit = LogisticRegression(solver = "newton-cg")
-logit.fit(x_train, y_train)
-y_pred = logit.predict(x_test)
-
-showConfusionMatrix(y_test,y_pred, "Logistic Regression")
-
 #Initialize all models
 estimators = []
 columns = ["Model", "Accuracy", "Presicion", "Recall"]
 results = pd.DataFrame()
 logit = LogisticRegression(solver = "newton-cg")
 estimators.append(('Logistic Regression', logit))
-RFClassifier = RandomForestClassifier(n_estimators=200, random_state = 0)
-estimators.append(('Random Forest', RFClassifier))
+#Choose suitable parameters 200 is one of the estimators
+param_grid = {
+    'max_features': [2, 3],
+    'n_estimators': [100, 200, 300, 1000]
+}
+#RFClassifier = RandomForestClassifier(n_estimators=200, random_state = 0)
+RFClassifier = RandomForestClassifier()
+RFClassifierGS = GridSearchCV(estimator = RFClassifier, param_grid = param_grid, refit=True)
+#RFClassifier = RandomForestClassifier(n_estimators=200, random_state = 0)
+estimators.append(('Random Forest', RFClassifierGS))
 NB = GaussianNB()
 estimators.append(('Naive Bayes', NB))
-SVM = SVC(random_state=0)
+
+param_grid = {'C': [0.1, 1, 10, 100, 1000],
+              'gamma': [1, 0.1, 0.01, 0.001, 0.0001],
+              'kernel': ['rbf']}
+
+SVM = GridSearchCV(SVC(), param_grid, refit=True)
 estimators.append(('Support Vector Classifier', SVM))
-GBT = GradientBoostingClassifier(random_state=0)
+param_grid = {
+              "max_features":["log2","sqrt"],
+              'n_estimators': [5,10,15,20]
+              }
+GBT = GridSearchCV(GradientBoostingClassifier(), param_grid = param_grid, refit = True)
 estimators.append(('Gradient Boosting Trees', GBT))
 voting = VotingClassifier(estimators = estimators)
 
@@ -105,6 +98,10 @@ plt.show()
 voting.fit(x_train,y_train)
 y_pred = voting.predict(x_test)
 showConfusionMatrix(y_test, y_pred, 'Ensemble')
+print(metrics.accuracy_score(y_test, y_pred))
+print(metrics.precision_score(y_test, y_pred))
+print(metrics.recall_score(y_test, y_pred))
 
-showRFFeatImoprtances(RFClassifier)
-#ROC Curve - to complete
+
+
+

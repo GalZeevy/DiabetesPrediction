@@ -9,7 +9,7 @@ Data exploration (EDA.py) – first glance on the data, visualizing features' ge
 
 Data Completion (KNNFillData.py) - some features have large amount of missing data, knn was used to complete it, optimal k was chosen by using the elbow curve method. Data completion was made based on correlation with some other features in the data. Features with small amount of missing data were completed by using measures of central tendency.
 
-Feature Engineering (FeatureEngineering.py) – some features were divided to categories (for example bmi) to check relations of features' categories with the outcome (by looking at general correlation and pie charts among diabetic and non-diabetic women).
+Feature Engineering (FeatureEngineering.py) – some features were divided to categories (for example bmi) to check relations of features' categories with the outcome (by looking at the general correlation and pie charts among diabetic and non-diabetic women).
 
 Models (predict.py) – logistic regression, random forest, naïve bayes, svm, gradient boosting trees and all models' ensemble were used to predict if a woman from the dataset's population might be diagnosed with diabetes, based on her medical characteristics.
 

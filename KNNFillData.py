@@ -7,49 +7,35 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import MinMaxScaler
 import statsmodels.api as sm
+import consts
 
-def showCorrelation(df):
+#definitions 1. result column - column in df which its data is completed with knn.
+# 2. reference column - column in df which has the highest correlation with the result column.
+# ref column is used as reference for the completion of the data in the result column by knn algorithm
+
+def showCorrelation(df,title):
     corr = df.corr()
     graph = sns.heatmap(corr, annot=True, cmap="Blues")
+    plt.title(title)
     plt.setp(graph.get_xticklabels(), rotation=15)
     plt.show()
 
-df = pd.read_csv("diabetes.csv")
+#Check correlation of dataframe columns with a specific column existing values (only data that is not empty)
+def CorrOnColExistingValues(df, col):
+    dfWithColExistValues = df[df[col] != 0]
+    title = "Correlation of " + col + " existing values with dataframe columns"
+    showCorrelation(dfWithColExistValues, title)
 
-#Zero's represent missing values, I replaced them with nans
-df["Glucose"] = df["Glucose"].replace(0, np.nan)
-df["BloodPressure"] = df["BloodPressure"].replace(0, np.nan)
-df["BMI"] = df["BMI"].replace(0, np.nan)
 
-#Filling the missing values in columns Glucose, BloodPressure and BMI
-glucose = df["Glucose"]
-bloodPressure = df["BloodPressure"]
-BMI = df["BMI"]
-
-#Check columns descriptive statisics (To see if there are significant differences between mean, median and mode of each one)
-print(glucose.describe())
-print(bloodPressure.describe())
-print(BMI.describe())
-
-#In the above columns mean and median are almost the same. I will prefer to use the mean, which includes all the data.
-df["Glucose"] = df["Glucose"].fillna(round(glucose.mean()))
-df["BloodPressure"] = df["BloodPressure"].fillna(round(bloodPressure.mean()))
-df["BMI"] = df["BMI"].fillna(round(BMI.mean(),1))
-
-#Check correlation of dataframe variables with column (only data that is filled)
-
-def checkExistingValuesCorr (col):
-    dfFullColVals = df[df[col] != 0]
-    showCorrelation(dfFullColVals)
-
-#Compare xCol distributions when yCol has values and when it doesn't have
-def emptyAndFullColValuesDistributions(xCol, yCol):
+#Compare reference column distributions when result column has only empty values and when it has only full values
+def compareDistributions(df, refCol, resCol):
     bins = 50
-    dfyColFull = df[df[yCol] != 0]
-    dfyColEmpty = df[df[yCol] == 0]
-    plt.hist(dfyColFull[xCol], bins, alpha=0.5, label= xCol + 'Full')
-    plt.hist(dfyColEmpty[xCol], bins, alpha=0.5, label= xCol + 'Empty')
-    plt.xlabel(xCol)
+    dfResColFull = df[df[resCol] != 0]
+    dfResColEmpty = df[df[resCol] == 0]
+    plt.hist(dfResColFull[refCol], bins, alpha=0.5, label= refCol + 'Full')
+    plt.hist(dfResColEmpty[refCol], bins, alpha=0.5, label= refCol + 'Empty')
+    plt.title('Compare distributions of ' + refCol + " when " +resCol + " is empty and full of values")
+    plt.xlabel(refCol)
     plt.legend(loc='upper right')
     plt.show()
 
@@ -70,22 +56,23 @@ def minKForKNN(X_train, y_train, X_test, y_test):
 
     return minK, rmse_val, minRmse, pred
 
-def knnModel(df,xCol, yCol):
-    dfyColFull = df[df[yCol] != 0]
-    xColFull = dfyColFull[xCol]
-    yColFull = dfyColFull[yCol]
-    xColFull = xColFull.values.reshape(-1,1)
+def knnModel(df,refCol, resCol):
+    dfResColFull = df[df[resCol] != 0]
+    refColFull = dfResColFull[refCol]
+    resColFull = dfResColFull[resCol]
+    refColFull = refColFull.values.reshape(-1,1)
     MMScaler = MinMaxScaler(feature_range=(0, 1))
-    scaledxColFull = MMScaler.fit_transform(xColFull)
-    scaledxColFullDF = pd.DataFrame(scaledxColFull)
+    scaledRefColFull = MMScaler.fit_transform(refColFull)
+    scaledRefColFullDF = pd.DataFrame(scaledRefColFull)
 
-    X_train, X_test, y_train, y_test = train_test_split(scaledxColFullDF,yColFull,test_size=0.2, random_state = 21)
+    X_train, X_test, y_train, y_test = train_test_split(scaledRefColFullDF,resColFull,test_size=0.2, random_state = 21)
 
     #train and test
     minK, rmse_val, minRmse, pred = minKForKNN(X_train, y_train, X_test, y_test)
 
     curve = pd.DataFrame(rmse_val) #elbow curve
-    curve.plot(xlabel = 'K', ylabel = 'rmse')
+    curve.plot(xlabel = 'K', ylabel = 'rmse', legend = False)
+    plt.title("KNN Elbow Curve")
     plt.show()
 
     print("minRmse:", minRmse)
@@ -100,39 +87,52 @@ def knnModel(df,xCol, yCol):
     #predict (write a function for duplicate code)
     knn = KNeighborsRegressor(n_neighbors=minK)
     knn.fit(X_train, y_train)
-    dfyColEmpty = df[df[yCol] == 0]
-    xColEmpty = dfyColEmpty[xCol].values.reshape(-1,1)
+    dfResColEmpty = df[df[resCol] == 0]
+    refColEmpty = dfResColEmpty[refCol].values.reshape(-1,1)
     MMScaler = MinMaxScaler(feature_range=(0, 1))
-    scaledxColEmpty = MMScaler.fit_transform(xColEmpty)
-    scaledxColEmptyDF = pd.DataFrame(scaledxColEmpty)
-    pred = knn.predict(scaledxColEmptyDF)
+    scaledRefColEmpty = MMScaler.fit_transform(refColEmpty)
+    scaledRefColEmptyDF = pd.DataFrame(scaledRefColEmpty)
+    pred = knn.predict(scaledRefColEmptyDF)
     print("KNN Prediction:",pred)
 
     print("Pred_Mean:",np.mean(pred))
     print("Pred_STD:",np.std(pred))
 
     predDF = pd.DataFrame(pred)
-    predDF = predDF.rename(columns={0: yCol})
-    yColEmptyXCol = dfyColEmpty[xCol].reset_index(drop=True)
-    predDF[xCol] = yColEmptyXCol
+    predDF = predDF.rename(columns={0: resCol})
+    resColEmptyRefCol = dfResColEmpty[refCol].reset_index(drop=True)
+    predDF[refCol] = resColEmptyRefCol
 
     #fill predicted values in dataframe
     for index, row in df.iterrows():
-        if row[yCol] == 0:
-            predSTrow = predDF.loc[predDF[xCol] == row[xCol]]
-            yColDf = predSTrow[yCol].head(1)
-            print(yColDf.values[0])
-            df.loc[index, yCol] = yColDf.values[0]
+        if row[resCol] == 0:
+            predSTrow = predDF.loc[predDF[refCol] == row[refCol]]
+            resColDf = predSTrow[resCol].head(1)
+            print(resColDf.values[0])
+            df.loc[index, resCol] = resColDf.values[0]
     return df
 
+def fillMissingValuesInCol(df, colName):
+    # Zero's represent missing values, I replaced them with nans
+    df[colName] = df[colName].replace(0,np.nan)
+    print(df[colName].describe())
+    # In the above column mean and median are almost the same, so mean was used because it includes all the data.
+    if colName != consts.bmi:
+        df[colName] = df[colName].fillna(round(df[colName].mean()))
+    else:
+        df[colName] = df[colName].fillna(round(df[colName].mean(),1))
+    return df
 
-checkExistingValuesCorr("SkinThickness")
-checkExistingValuesCorr("Insulin")
-emptyAndFullColValuesDistributions("BMI", "SkinThickness")
-emptyAndFullColValuesDistributions("Glucose", "Insulin")
-df = knnModel(df, "BMI", "SkinThickness")
-df = knnModel(df, "Glucose", "Insulin")
+df = pd.read_csv(consts.diabetesFile)
+df = fillMissingValuesInCol(df,consts.glucose)
+df = fillMissingValuesInCol(df, consts.bloodPressure)
+df = fillMissingValuesInCol(df, consts.bmi)
+CorrOnColExistingValues(df,consts.skinThickness)
+CorrOnColExistingValues(df,consts.insulin)
+compareDistributions(df,consts.bmi, consts.skinThickness)
+compareDistributions(df,consts.glucose, consts.insulin)
+df = knnModel(df, consts.bmi, consts.skinThickness)
+df = knnModel(df, consts.glucose, consts.insulin)
+showCorrelation(df, "Correlation test after data completion")
 
-showCorrelation(df)
-
-df.to_csv("DataCompletionCheck.csv", index = False)
+df.to_csv(consts.dataCompletionFile, index = False)

@@ -4,8 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from enum import Enum
 import consts
-
-df = pd.read_csv("diabetes.csv")
+import GeneralFunctions
 
 #Divide continuous variables to categories by medical terms
 def BMICats(x):
@@ -42,9 +41,19 @@ def insulinCats(x):
     else:
         return 2
 
+def createCategoriesColumns(df):
+    df[consts.bmiCategory] = df[consts.bmi].apply(BMICats)
+    df[consts.glucoseCategory] = df[consts.glucose].apply(GlucoseCats)
+    df[consts.bloodPressureCategory] = df[consts.bloodPressure].apply(BloodPressureCats)
+    df[consts.insulinCategory] = df[consts.insulin].apply(insulinCats)
+
+    dfcats = df[[consts.bmiCategory, consts.bloodPressureCategory, consts.glucoseCategory, consts.insulinCategory,
+                 consts.outcome]]
+    return df, dfcats
+
 def pieChart(df, column, lables):
-    diabetic = df[df[outcome] == 1]
-    nonDiabetic = df[df[outcome] == 0]
+    diabetic = df[df[consts.outcome] == 1]
+    nonDiabetic = df[df[consts.outcome] == 0]
     plt.subplot(3, 3, 1)
     s = df[column].map(lables).value_counts()
     plt.pie(s, labels=s.index, autopct='%1.1f%%')
@@ -60,19 +69,9 @@ def pieChart(df, column, lables):
 
     plt.show()
 
-df[consts.bmiCategory] = df[consts.bmi].apply(BMICats)
-df[consts.glucoseCategory] = df[consts.glucose].apply(GlucoseCats)
-df[consts.bloodPressureCategory] = df[consts.bloodPerssure].apply(BloodPressureCats)
-df[consts.insulinCategory] = df[consts.insulin].apply(insulinCats)
-
-dfcats = df[[consts.bmiCategory,consts.bloodPressureCategory, consts.glucoseCategory, consts.insulinCategory,consts.outcome]]
-
-#Check correlation of new categories with the outcome
-corr = dfcats.corr(method = 'kendall')
-print(corr)
-graph = sns.heatmap(corr, annot = True, cmap= "Blues")
-plt.setp(graph.get_xticklabels(), rotation=15)
-plt.show()
+df = GeneralFunctions.readFile(consts.diabetesFile)
+df, dfcats = createCategoriesColumns(df)
+GeneralFunctions.showCorrelation(dfcats,"Correlation of categories",'kendall')
 
 BMI_lables = {1:'Underweight',2:'Normalweight',3:'Overweight', 4:'Obese'}
 Glucose_lables = {1: 'Normal', 2:'Prediabetis', 3: 'Diabetis'}

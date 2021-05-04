@@ -13,9 +13,8 @@ from sklearn.svm import SVC
 from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import roc_curve
-from sklearn.metrics import roc_auc_score
 import consts
+import GeneralFunctions
 
 def trainTestData(df):
     x = df.drop([consts.outcome], 1, inplace=False)
@@ -121,7 +120,7 @@ def featureImportance(modelObj):
     plt.ylabel("Importance")
     plt.show()
 
-df = pd.read_csv(consts.dataCompletionFile)
+df = GeneralFunctions.readFile(consts.dataCompletionFile)
 x_train, x_test,y_train,y_test = trainTestData(df)
 estimators = buildModels()
 estimators = fitModels(estimators,x_train,y_train)

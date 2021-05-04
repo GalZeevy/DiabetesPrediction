@@ -3,15 +3,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import consts
+import GeneralFunctions
 import sys
 
-def readFile(file):
-    try:
-        df = pd.read_csv(file)
-        return df
-    except FileNotFoundError:
-        print("File not found")
-        sys.exit()
+def showMissingValuesInData(df):
+    # Replace zero with null value
+    df[consts.glucose] = df[consts.glucose].replace(0, np.nan)
+    df[consts.bloodPressure] = df[consts.bloodPressure].replace(0, np.nan)
+    df[consts.skinThickness] = df[consts.skinThickness].replace(0, np.nan)
+    df[consts.insulin] = df[consts.insulin].replace(0, np.nan)
+    df[consts.bmi] = df[consts.bmi].replace(0, np.nan)
+
+    # Show percentage of missing values in data columns
+    print("Null Values in the database (%)")
+    print(round(df.isnull().sum(axis=0) * 100 / len(df), 2))
+    return df
 
 #Show columns' distributions
 def paramsDistribution(df):
@@ -46,39 +52,20 @@ def compareParamsDistribution(df):
 
     plt.show()
 
-def showCorrelation(df):
-    corr = df.corr()
-    graph = sns.heatmap(corr, annot=True, cmap="Blues")
-    plt.setp(graph.get_xticklabels(), rotation=15)
-    plt.show()
-
-
 #Read file before data completion
-df = readFile(consts.diabetesFile)
+df = GeneralFunctions.readFile(consts.diabetesFile)
 #Read file after data completion
-dfCompData = readFile(consts.dataCompletionFile)
-
-#Replace zero with null value
-df[consts.glucose] = df[consts.glucose].replace(0, np.nan)
-df[consts.bloodPressure] = df[consts.bloodPressure].replace(0, np.nan)
-df[consts.skinThickness] = df[consts.skinThickness].replace(0, np.nan)
-df[consts.insulin] = df[consts.insulin].replace(0, np.nan)
-df[consts.bmi] = df[consts.bmi].replace(0, np.nan)
-
-#Show percentage of missing values in data columns
-print("Null Values in the database (%)")
-print(round(df.isnull().sum(axis = 0) * 100 / len(df),2))
-
+dfCompData = GeneralFunctions.readFile(consts.dataCompletionFile)
+df = showMissingValuesInData(df)
 #Descriptive Statistics
 print(df.describe().T)
 print(dfCompData.describe().T)
-
 #Show columns' distributions before and after data completion
 paramsDistribution(df)
 paramsDistribution(dfCompData)
 compareParamsDistribution(df)
 compareParamsDistribution(dfCompData)
-showCorrelation(df)
-showCorrelation(dfCompData)
+GeneralFunctions.showCorrelation(df, "Dataframe correlation before data completion",'pearson')
+GeneralFunctions.showCorrelation(dfCompData, "Dataframe correlation after data completion",'pearson')
 
 

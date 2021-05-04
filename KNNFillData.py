@@ -8,23 +8,17 @@ from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import MinMaxScaler
 import statsmodels.api as sm
 import consts
+import GeneralFunctions
 
 #definitions 1. result column - column in df which its data is completed with knn.
 # 2. reference column - column in df which has the highest correlation with the result column.
 # ref column is used as reference for the completion of the data in the result column by knn algorithm
 
-def showCorrelation(df,title):
-    corr = df.corr()
-    graph = sns.heatmap(corr, annot=True, cmap="Blues")
-    plt.title(title)
-    plt.setp(graph.get_xticklabels(), rotation=15)
-    plt.show()
-
 #Check correlation of dataframe columns with a specific column existing values (only data that is not empty)
 def CorrOnColExistingValues(df, col):
     dfWithColExistValues = df[df[col] != 0]
     title = "Correlation of " + col + " existing values with dataframe columns"
-    showCorrelation(dfWithColExistValues, title)
+    GeneralFunctions.showCorrelation(dfWithColExistValues, title, 'pearson')
 
 
 #Compare reference column distributions when result column has only empty values and when it has only full values
@@ -123,7 +117,7 @@ def fillMissingValuesInCol(df, colName):
         df[colName] = df[colName].fillna(round(df[colName].mean(),1))
     return df
 
-df = pd.read_csv(consts.diabetesFile)
+df = GeneralFunctions.readFile(consts.diabetesFile)
 df = fillMissingValuesInCol(df,consts.glucose)
 df = fillMissingValuesInCol(df, consts.bloodPressure)
 df = fillMissingValuesInCol(df, consts.bmi)
@@ -133,6 +127,6 @@ compareDistributions(df,consts.bmi, consts.skinThickness)
 compareDistributions(df,consts.glucose, consts.insulin)
 df = knnModel(df, consts.bmi, consts.skinThickness)
 df = knnModel(df, consts.glucose, consts.insulin)
-showCorrelation(df, "Correlation test after data completion")
+GeneralFunctions.showCorrelation(df, "Correlation test after data completion",'pearson')
 
 df.to_csv(consts.dataCompletionFile, index = False)

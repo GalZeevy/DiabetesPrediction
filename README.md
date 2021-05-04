@@ -3,7 +3,7 @@ This data science project is about prediction of diabetes, based on personal med
 
 Background – diabetes is a chronic metabolic disease, characterized by a high blood sugar level over time and disorders in the insulin hormone's function.
 
-Project's data – medical data about 800 adult women, with and without diabetes. Can be found at https://www.kaggle.com/uciml/pima-indians-diabetes-database
+Project's data – medical data about 800 adult women, with and without diabetes. The data source can be found at https://www.kaggle.com/uciml/pima-indians-diabetes-database
 
 Data exploration (EDA.py) – first glance on the data, visualizing features' general distributions, comparing features' distributions of women with and without diabetes and checking correlations between features. It already can be noticed that glucose, bmi, insulin might impact on diabetes onset.
 
@@ -11,7 +11,7 @@ Data completion (KNNFillData.py) - some features have large amount of missing da
 
 Feature engineering (FeatureEngineering.py) – some features were divided to categories (for example bmi) to check relations of features' categories with the outcome (by looking at the general correlation and pie charts among diabetic and non-diabetic women).
 
-Models (predict.py) – logistic regression, random forest, naïve bayes, svm, gradient boosting trees and all models' ensemble were used to predict if a woman from the dataset's population might be diagnosed with diabetes, based on her medical characteristics.
+Models (Predict.py) – logistic regression, random forest, naïve bayes, svm, gradient boosting trees and all models' ensemble were used to predict if a woman from the dataset's population might be diagnosed with diabetes, based on her medical characteristics.
 
-Conclusions – random forest had the best accuracy and recall, svm has the best precision. The ensemble does not outperform some of the models. Random Forest's feature importance indicates that glucose, bmi, insulin indicators were more prominent in the diabetes prediction.
+Conclusions – random forest has the best accuracy and recall, svm has the best precision. The ensemble does not outperform some of the models. Random forest's feature importance indicates that glucose, bmi, insulin indicators were more prominent in the diabetes prediction.
 
